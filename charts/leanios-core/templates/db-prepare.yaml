@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "leanios-core.name" . }}-db-prepare
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+  labels:
+    app: {{ template "leanios-core.name" . }}
+    chart: {{ template "leanios-core.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      labels:
+        app: {{ template "leanios-core.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "leanios-core.name" . }}-db-prepare
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["/docker-entrypoint.sh"]
+        args: ["rake", "db:extensions", "db:migrate", "data:migrate", "db:seed"]
+        envFrom:
+        - configMapRef:
+            name: {{ template "leanios-core.name" . }}-configmap
+        - secretRef:
+            name: {{ if .Values.existingSecret }}{{ .Values.existingSecret }}{{- else }}{{ template "leanios-core.name" . }}-secrets{{- end }}
+      initContainers:
+      - name: init-wait-for-dependencies
+        image: wshihadeh/wait_for:v1.2
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["/docker-entrypoint.sh"]
+        args: ["wait_for_tcp", "postgress:DATABASE_HOST:DATABASE_PORT"]
+        envFrom:
+        - configMapRef:
+            name: {{ template "leanios-core.name" . }}-configmap
+        - secretRef:
+            name: {{ if .Values.existingSecret }}{{ .Values.existingSecret }}{{- else }}{{ template "leanios-core.name" . }}-secrets{{- end }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretName }}
+      restartPolicy: Never

@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "leanios-core.name" . }}-web
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum  }}
+    checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum  }}
+  labels:
+    app: {{ template "leanios-core.name" . }}
+    chart: {{ template "leanios-core.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.webReplicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "leanios-core.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum  }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum  }}
+      labels:
+        app: {{ template "leanios-core.name" . }}
+        release: {{ .Release.Name }}
+        service: web
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretName }}
+      containers:
+        - name: {{ template "leanios-core.name" . }}-web
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/docker-entrypoint.sh"]
+          args: ["web"]
+          envFrom:
+          - configMapRef:
+              name: {{ template "leanios-core.name" . }}-configmap
+          - secretRef:
+              name: {{ if .Values.existingSecret }}{{ .Values.existingSecret }}{{- else }}{{ template "leanios-core.name" . }}-secrets{{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      restartPolicy: {{ .Values.restartPolicy  }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "leanios-core.name" . }}-delayed-jobs
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum  }}
+    checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum  }}
+  labels:
+    app: {{ template "leanios-core.name" . }}
+    chart: {{ template "leanios-core.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.djsReplicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "leanios-core.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum  }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum  }}
+      labels:
+        app: {{ template "leanios-core.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecretName }}
+      containers:
+        - name: {{ .Chart.Name }}-delayed-jobs
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/docker-entrypoint.sh"]
+          args: ["delayed_jobs"]
+          envFrom:
+          - configMapRef:
+              name: {{ template "leanios-core.name" . }}-configmap
+          - secretRef:
+              name:  {{ if .Values.existingSecret }}{{ .Values.existingSecret }}{{- else }}{{ template "leanios-core.name" . }}-secrets{{- end }}
+          livenessProbe:
+            exec:
+              command:
+              - pgrep
+              - -fla
+              - delayed_job
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      restartPolicy: {{ .Values.restartPolicy  }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
