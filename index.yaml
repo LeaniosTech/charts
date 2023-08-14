@@ -3,6 +3,19 @@ entries:
   leanios-core:
   - apiVersion: v1
     appVersion: "1.2"
+    created: "2023-08-14T18:21:04.425999268Z"
+    description: Leanios Helm chart for Kubernetes reources
+    digest: 04aab71626d8c9382b707a0f557a739edeab88f17756d28d964ff37aad5fab07
+    maintainers:
+    - email: info@leanios.com
+      name: Leanios
+      url: leanios.com
+    name: leanios-core
+    urls:
+    - https://github.com/LeaniosTech/charts/releases/download/leanios-core-0.0.11-alpha01/leanios-core-0.0.11-alpha01.tgz
+    version: 0.0.11-alpha01
+  - apiVersion: v1
+    appVersion: "1.2"
     created: "2023-08-14T12:56:43.635263216Z"
     description: Leanios Helm chart for Kubernetes reources
     digest: 026ae6a754ff06a6a2310d33175e9e0f31c03299fb196f2360520af903568353
@@ -14,4 +27,4 @@ entries:
     urls:
     - https://github.com/LeaniosTech/charts/releases/download/leanios-core-0.0.10/leanios-core-0.0.10.tgz
     version: 0.0.10
-generated: "2023-08-14T12:56:43.635268816Z"
+generated: "2023-08-14T18:21:04.426029068Z"
