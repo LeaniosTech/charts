@@ -1,9 +1,0 @@
-apiVersion: v1
-appVersion: "1.2"
-description: Leanios Helm chart for Kubernetes reources
-name: leanios-core
-maintainers:
-  - name: Leanios
-    email: info@leanios.com
-    url: leanios.com
-version: 0.0.10
